@@ -39,7 +39,7 @@ helm upgrade monitoring prometheus-community/kube-prometheus-stack  -f grafana/v
 ```
 
 ## Loki
-### Buckets S3
+### AWS Configuration
 https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/aws/
 
 We create a bucket for chunks and another for ruler.
@@ -49,6 +49,8 @@ We create a bucket for chunks and another for ruler.
 We create the policy as loki-s3-policy with which we find the policies/loki-s3-policy.json
 
 We create the LokiServiceAccountRole role by assigning the trust-policy to it with policies/trus-policy.json.
+### Deployment
+
 Install loki:
 ```bash
 helm install loki grafana/loki -f loki/values.loki.aws.yaml -n monitoring
