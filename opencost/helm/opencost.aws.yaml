@@ -1,0 +1,101 @@
+clusterName: "cluster.local"
+
+loglevel: info
+
+plugins:
+  enabled: false
+
+# -- List of secret names to use for pulling the images
+
+serviceAccount:
+  create: true
+  name: opencost
+  namespace: opencost
+  annotations:
+    "eks.amazonaws.com/role-arn": "arn:aws:iam::<ACCOUNT_ID>:role/CostExplorerReadRole" 
+
+
+
+opencost:
+  # -- <SECRET_NAME> for the secret containing the Cloud Costs cloud-integration.json https://www.opencost.io/docs/configuration/#cloud-costs
+  # -- kubectl create secret generic cloud-cost --from-file=cloud-integration.json -n opencost
+  cloudIntegrationSecret: "cloud-cost"
+  exporter:
+    apiPort: 9003
+    cloudProviderApiKey: ""
+    defaultClusterId: '<CLUSTER_NAME>'
+    replicas: 1
+    resources:
+      requests:
+        cpu: '10m'
+        memory: '55Mi'
+      limits:
+        cpu: '999m'
+        memory: '1Gi'
+
+    # Path of CSV file
+    csv_path: ""
+
+    # Persistent volume claim for storing the data. eg: csv file
+    persistence:
+      enabled: false
+
+    aws:
+      # -- AWS secret access key
+      secret_access_key: ""
+      # -- AWS secret key id
+      access_key_id: ""
+    # -- A list of volume mounts to be added to the pod
+    extraVolumeMounts: []
+    # -- List of additional environment variables to set in the container
+    env: []
+
+  customPricing:
+    enabled: false
+    
+
+  dataRetention:
+    dailyResolutionDays: 15
+
+  carbonCost:
+    enabled: false
+
+  cloudCost:
+    enabled: true
+    refreshRateHours: 2
+    runWindowDays: 3
+    monthToDateInterval: 6
+    queryWindowDays: 7
+
+
+  prometheus:
+    internal:
+      ## Data of the existing prometheus
+      enabled: true
+      serviceName: monitoring-kube-prometheus-prometheus
+      namespaceName: monitoring
+      port: 9090
+      
+    amp:
+      enabled: false  
+    thanos:
+      enabled: false
+
+  ui:
+    # -- Enable OpenCost UI
+    enabled: true
+    resources:
+      requests:
+        cpu: '10m'
+        memory: '55Mi'
+      limits:
+        cpu: '999m'
+        memory: '1Gi'
+    uiPort: 9090
+
+
+    ingress:
+      enabled: false
+
+
+  nodeSelector: {}

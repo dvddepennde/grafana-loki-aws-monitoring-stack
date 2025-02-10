@@ -1,0 +1,115 @@
+alertmanager:
+  enabled: false
+
+grafana:
+
+  enabled: true
+  adminPassword: VERY_SECRET_PASSWD
+
+  envFromSecret: grafana-db-secret
+  grafana.ini:
+    database:
+      type: ${GF_DATABASE_TYPE}
+      host: ${GF_DATABASE_HOST} # Here it's ARN endpoint, also work with MySQL DBs (port also needed, host:port)
+      name: ${GF_DATABASE_NAME}
+      user: ${GF_DATABASE_USER}
+      password: ${GF_DATABASE_PASSWORD} 
+      ssl_mode: ${GF_DATABASE_SSL_MODE} 
+
+
+
+
+  rbac:
+    pspEnabled: false
+
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    annotations:
+      alb.ingress.kubernetes.io/certificate-arn: <CERITIFICATE_ARN>
+      alb.ingress.kubernetes.io/group.name: <ALB_NAME>
+      alb.ingress.kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+      alb.ingress.kubernetes.io/load-balancer-name: <ALB_NAME>
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+      alb.ingress.kubernetes.io/stickiness-enabled: 'true'
+      alb.ingress.kubernetes.io/success-codes: 200,201,301,302
+      alb.ingress.kubernetes.io/target-type: ip
+
+    hosts:
+      - <GRAFANA_HOST>
+    path: /
+
+
+  # Disabled because DB persistence
+  persistence:
+     enabled: false
+
+  serviceAccount:
+    create: true
+    autoMount: true
+
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      # Allow discovery in all namespaces for dashboards
+      searchNamespace: ALL
+
+      # Support for new table panels, when enabled grafana auto migrates the old table panels to newer table panels
+      enableNewTablePanelSyntax: false
+
+      ## Annotations for Grafana dashboard configmaps
+      ##
+      annotations: {}
+      multicluster:
+        global:
+          enabled: false
+        etcd:
+          enabled: false
+      provider:
+        allowUiUpdates: false
+    datasources:
+      enabled: true
+      defaultDatasourceEnabled: true
+      isDefaultDatasource: true
+
+      name: Prometheus
+      uid: prometheus
+
+
+      createPrometheusReplicasDatasources: false
+      label: grafana_datasource
+      labelValue: "1"
+      alertmanager:
+        enabled: true
+        name: Alertmanager
+        uid: alertmanager
+        handleGrafanaManagedAlerts: false
+        implementation: prometheus
+
+prometheus:
+  enabled: true
+  
+  prometheusSpec:
+    resources: {}
+    # requests:
+    #   memory: 400Mi
+    storageSpec:
+      volumeClaimTemplate:
+        metadata:
+            name: prometheus-pvc 
+        spec:
+          storageClassName: gp3
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi 
+    additionalScrapeConfigs: |
+      - job_name: "karpenter"
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["karpenter.kube-system.svc.cluster.local:8080"]

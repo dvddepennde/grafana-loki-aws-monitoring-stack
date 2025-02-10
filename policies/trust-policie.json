@@ -1,0 +1,18 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::<AWS_ACCOUNT>:oidc-provider/oidc.eks.<AWS_REGION>.amazonaws.com/id/<AWS_CLUSTER_OIDC>"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "oidc.eks.<AWS_REGION>.amazonaws.com/id/<AWS_CLUSTER_OIDC>:sub": "system:serviceaccount:monitoring:loki",
+                    "oidc.eks.<AWS_REGION>.amazonaws.com/id/<AWS_CLUSTER_OIDC>:aud": "sts.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
